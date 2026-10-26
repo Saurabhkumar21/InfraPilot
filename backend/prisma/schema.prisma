@@ -30,4 +30,26 @@ model User {
   role         Role     @default(VIEWER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  auditLogs AuditLog[]
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  action    AuditAction
+  entity    String
+  entityId  String
+  details   Json?
+  actorId   String
+  actor     User        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
 }

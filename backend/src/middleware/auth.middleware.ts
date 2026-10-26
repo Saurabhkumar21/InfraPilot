@@ -1,6 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
+declare global {
+  namespace Express {
+    interface Request {
+      auth?: {
+        userId: string;
+        role: "ADMIN" | "VIEWER";
+      };
+    }
+  }
+}
+
 type UserRole = "ADMIN" | "VIEWER";
 
 type AuthenticatedRequest = Request & {
