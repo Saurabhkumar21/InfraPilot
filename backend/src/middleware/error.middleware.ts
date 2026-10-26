@@ -1,8 +1,4 @@
-import type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
@@ -10,17 +6,24 @@ export function errorHandler(
   error: unknown,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   console.error(error);
 
   if (error instanceof ZodError) {
-  res.status(400).json({
-    message: "Invalid request data",
-    errors: error.flatten().fieldErrors,
-  });
-  return;
-}
+    res.status(400).json({
+      message: "Invalid request data",
+      errors: error.flatten().fieldErrors,
+    });
+    return;
+  }
+
+  if (error instanceof Error && error.message === "Asset not found") {
+    res.status(404).json({
+      message: "Asset not found",
+    });
+    return;
+  }
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") {

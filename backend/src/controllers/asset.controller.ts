@@ -11,9 +11,7 @@ import {
 const createAssetSchema = z.object({
   name: z.string().trim().min(1),
   type: z.enum(["server", "database", "virtual-machine"]),
-  environment: z
-    .enum(["development", "staging", "production"])
-    .optional(),
+  environment: z.enum(["development", "staging", "production"]).optional(),
   status: z.enum(["active", "inactive", "maintenance"]).optional(),
   ipAddress: z.string().trim().optional(),
 });
@@ -32,7 +30,7 @@ const paginationSchema = z.object({
 export async function listAssets(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const result = paginationSchema.safeParse(req.query);
@@ -65,7 +63,7 @@ export async function listAssets(
 export async function addAsset(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const result = createAssetSchema.safeParse(req.body);
@@ -78,7 +76,14 @@ export async function addAsset(
       return;
     }
 
-    const asset = await createAsset(result.data);
+    const actorId = req.auth?.userId;
+
+    if (!actorId) {
+      res.status(401).json({ message: "Authentication required" });
+      return;
+    }
+
+    const asset = await createAsset(result.data, actorId);
     res.status(201).json({ data: asset });
   } catch (error) {
     next(error);
@@ -88,34 +93,7 @@ export async function addAsset(
 export async function getAsset(
   req: Request,
   res: Response,
-  next: NextFunction
-) {
-  try {
-    const idResult = z.string().uuid().safeParse(req.params.id);
-
-     if (!idResult.success) {
-      res.status(400).json({ message: "Invalid asset ID" });
-      return;
-    }
-
-    const asset = await getAssetById(idResult.data);
-
-    if (!asset) {
-      res.status(404).json({ message: "Asset not found" });
-      return;
-    }
-
-     res.status(200).json({ data: asset });
-
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function removeAsset(
-  req: Request,
-  res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const idResult = z.string().uuid().safeParse(req.params.id);
@@ -132,7 +110,40 @@ export async function removeAsset(
       return;
     }
 
-    await deleteAsset(idResult.data);
+    res.status(200).json({ data: asset });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function removeAsset(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const idResult = z.string().uuid().safeParse(req.params.id);
+
+    if (!idResult.success) {
+      res.status(400).json({ message: "Invalid asset ID" });
+      return;
+    }
+
+    const asset = await getAssetById(idResult.data);
+
+    if (!asset) {
+      res.status(404).json({ message: "Asset not found" });
+      return;
+    }
+
+    const actorId = req.auth?.userId;
+
+    if (!actorId) {
+      res.status(401).json({ message: "Authentication required" });
+      return;
+    }
+
+    await deleteAsset(idResult.data, actorId);
 
     res.status(200).json({
       message: "Asset deleted successfully",
@@ -146,7 +157,7 @@ export async function removeAsset(
 export async function editAsset(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const idResult = z.string().uuid().safeParse(req.params.id);
@@ -173,9 +184,17 @@ export async function editAsset(
       return;
     }
 
+    const actorId = req.auth?.userId;
+
+    if (!actorId) {
+      res.status(401).json({ message: "Authentication required" });
+      return;
+    }
+
     const updatedAsset = await updateAsset(
       idResult.data,
-      bodyResult.data
+      bodyResult.data,
+      actorId,
     );
 
     res.status(200).json({ data: updatedAsset });
@@ -183,4 +202,3 @@ export async function editAsset(
     next(error);
   }
 }
-
