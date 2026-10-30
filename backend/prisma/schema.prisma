@@ -31,6 +31,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   auditLogs AuditLog[]
+  provisioningJobs ProvisioningJob[]
 }
 
 enum AuditAction {
@@ -51,5 +52,31 @@ model AuditLog {
 
   @@index([actorId])
   @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+
+enum ProvisioningStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ProvisioningJob {
+  id            String             @id @default(uuid())
+  resourceName  String
+  resourceType  String
+  environment   String
+  status        ProvisioningStatus @default(QUEUED)
+  errorMessage  String?
+  requestedById String
+  requestedBy   User               @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+  createdAt     DateTime           @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  @@index([status])
+  @@index([requestedById])
   @@index([createdAt])
 }

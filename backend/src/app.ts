@@ -6,6 +6,7 @@ import { notFoundHandler } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
+import provisioningRoutes from "./routes/provisioning.routes.js";
 
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/api/assets", assetRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/audit-logs", auditRoutes);
+app.use("/api/provisioning", provisioningRoutes);
 app.use(notFoundHandler); // Handle requests to unknown routes
 app.use(errorHandler); // Handle errors passed through next(error)
 
