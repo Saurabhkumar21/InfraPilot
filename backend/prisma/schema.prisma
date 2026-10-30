@@ -75,6 +75,7 @@ model ProvisioningJob {
   createdAt     DateTime           @default(now())
   startedAt     DateTime?
   completedAt   DateTime?
+  idempotencyKey String            @unique
 
   @@index([status])
   @@index([requestedById])

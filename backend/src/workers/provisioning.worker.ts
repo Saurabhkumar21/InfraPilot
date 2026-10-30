@@ -75,3 +75,16 @@ worker.on("error", (error) => {
 });
 
 console.log("InfraPilot provisioning worker started");
+
+async function shutdown() {
+  console.log("Shutting down provisioning worker...");
+
+  await worker.close();
+  await redis.quit();
+  await prisma.$disconnect();
+
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

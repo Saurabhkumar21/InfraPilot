@@ -49,10 +49,10 @@ export async function listAssets(
     res.status(200).json({
       data: resultData.assets,
       pagination: {
-        page: resultData.page,
-        limit: resultData.limit,
-        total: resultData.total,
-        totalPages: resultData.totalPages,
+        page: resultData.pagination.page,
+        limit: resultData.pagination.limit,
+        total: resultData.pagination.total,
+        totalPages: resultData.pagination.totalPages,
       },
     });
   } catch (error) {

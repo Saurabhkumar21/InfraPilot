@@ -34,9 +34,19 @@ export async function createProvisioning(
       return;
     }
 
+    const idempotencyKey = z.string().trim().min(1).safeParse(
+      req.get("Idempotency-Key")
+    );
+
+    if (!idempotencyKey.success) {
+      res.status(400).json({ message: "Idempotency-Key header is required" });
+      return;
+    }
+
     const job = await createProvisioningJob(
       result.data,
-      actorId
+      actorId,
+      idempotencyKey.data
     );
 
     res.status(202).json({

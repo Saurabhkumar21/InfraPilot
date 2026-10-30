@@ -9,37 +9,34 @@ interface CreateProvisioningInput {
 
 export async function createProvisioningJob(
   data: CreateProvisioningInput,
-  actorId: string
+  actorId: string,
+  idempotencyKey: string
 ) {
+  const existing = await prisma.provisioningJob.findUnique({
+    where: { idempotencyKey },
+  });
+
+  if (existing) {
+    if (existing.requestedById !== actorId) {
+      throw new Error("Idempotency key already used");
+    }
+
+    return existing;
+  }
+
   const job = await prisma.provisioningJob.create({
     data: {
       ...data,
       requestedById: actorId,
+      idempotencyKey,
     },
   });
 
-  try {
-    await provisioningQueue.add(
-      "provision-server",
-      {
-        provisioningJobId: job.id,
-      },
-      {
-        jobId: job.id,
-      }
-    );
-  } catch (error) {
-    await prisma.provisioningJob.update({
-      where: { id: job.id },
-      data: {
-        status: "FAILED",
-        errorMessage: "Unable to add job to the queue",
-        completedAt: new Date(),
-      },
-    });
-
-    throw error;
-  }
+  await provisioningQueue.add(
+    "provision",
+    { provisioningJobId: job.id },
+    { jobId: job.id }
+  );
 
   return job;
 }
